@@ -3,9 +3,6 @@ from pydantic import BaseModel
 import os
 
 from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH
-import aiosqlite
-
-
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
