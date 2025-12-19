@@ -17,15 +17,21 @@ class TgUser:
     raw: Dict[str, Any]
 
 
-def verify_webapp_init_data(init_data: str, bot_token: str, max_age_seconds: int = 24 * 3600) -> TgUser:
+def verify_webapp_init_data(
+    init_data: str,
+    bot_token: str,
+    max_age_seconds: int = 24 * 3600,
+) -> TgUser:
     """
     Verifies Telegram WebApp initData signature.
     Returns TgUser if valid, otherwise raises TelegramAuthError.
     """
+
     if not init_data:
         raise TelegramAuthError("Missing initData")
 
     params = dict(parse_qsl(init_data, keep_blank_values=True))
+
     received_hash = params.pop("hash", None)
     if not received_hash:
         raise TelegramAuthError("Missing hash in initData")
@@ -36,10 +42,22 @@ def verify_webapp_init_data(init_data: str, bot_token: str, max_age_seconds: int
         if int(time.time()) - auth_date > max_age_seconds:
             raise TelegramAuthError("initData expired")
 
-    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
+    data_check_string = "\n".join(
+        f"{k}={v}" for k, v in sorted(params.items())
+    )
 
-    secret_key = sha256(bot_token.encode("utf-8")).digest()
-    computed_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), sha256).hexdigest()
+    # 🔐 Правильный secret для Telegram WebApp
+    secret_key = hmac.new(
+        key=b"WebAppData",
+        msg=bot_token.encode("utf-8"),
+        digestmod=sha256,
+    ).digest()
+
+    computed_hash = hmac.new(
+        key=secret_key,
+        msg=data_check_string.encode("utf-8"),
+        digestmod=sha256,
+    ).hexdigest()
 
     if not hmac.compare_digest(computed_hash, received_hash):
         raise TelegramAuthError("Bad initData signature")
@@ -48,7 +66,11 @@ def verify_webapp_init_data(init_data: str, bot_token: str, max_age_seconds: int
     if not user_json:
         raise TelegramAuthError("Missing user in initData")
 
-    user_obj = json.loads(user_json)
+    try:
+        user_obj = json.loads(user_json)
+    except Exception as e:
+        raise TelegramAuthError(f"Bad user json: {e}")
+
     if "id" not in user_obj:
         raise TelegramAuthError("Missing user.id")
 
