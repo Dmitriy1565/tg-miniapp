@@ -83,3 +83,32 @@ document.getElementById("clearBtn").onclick = async () => {
     setStatus("Ошибка: " + e.message);
   }
 };
+async function loadPlans() {
+  try {
+    setStatus("Загружаю тарифы...");
+    const data = await post("/api/plans", {});
+    renderPlans(data.plans || []);
+    setStatus("");
+  } catch (e) {
+    setStatus("Ошибка загрузки тарифов");
+  }
+}
+function renderPlans(plans) {
+  notesEl.innerHTML = "";
+
+  for (const p of plans) {
+    const div = document.createElement("div");
+    div.className = "note";
+    div.innerHTML = `
+      <strong>${p.name}</strong><br>
+      <small>${p.days} дней</small><br>
+      <b>${p.price} ₽</b><br><br>
+      <button onclick="buyPlan(${p.id})">Купить</button>
+    `;
+    notesEl.appendChild(div);
+  }
+}
+function buyPlan(planId) {
+  alert("Покупка тарифа ID = " + planId + " (скоро будет оплата)");
+}
+loadPlans();
