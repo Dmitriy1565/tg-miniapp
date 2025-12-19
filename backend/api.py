@@ -52,6 +52,7 @@ async def api_clear(request: Request):
     return {"ok": True}
 
 @app.get("/plans")
+@app.post("/plans")
 async def api_plans():
     async with aiosqlite.connect(DB_PATH) as db:
         cur = await db.execute("SELECT id, name, days, price FROM plans ORDER BY days")
@@ -63,3 +64,4 @@ async def api_plans():
             for r in rows
         ]
     }
+

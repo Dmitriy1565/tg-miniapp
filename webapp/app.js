@@ -90,8 +90,9 @@ async function loadPlans() {
     renderPlans(data.plans || []);
     setStatus("");
   } catch (e) {
-    setStatus("Ошибка загрузки тарифов");
-  }
+  setStatus("Ошибка загрузки тарифов: " + e.message);
+}
+
 }
 function renderPlans(plans) {
   notesEl.innerHTML = "";
