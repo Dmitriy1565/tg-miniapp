@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import os
 import aiosqlite
+import sqlite3
 from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
 
@@ -51,9 +52,19 @@ async def api_clear(request: Request):
 @app.get("/plans")
 @app.post("/plans")
 async def api_plans():
-    async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute("SELECT id, name, days, price FROM plans ORDER BY days")
-        rows = await cur.fetchall()
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            cur = await db.execute("SELECT id, name, days, price FROM plans ORDER BY days")
+            rows = await cur.fetchall()
+    except sqlite3.OperationalError as e:
+        # Если таблицы еще нет — создаем ее через init_db() и пробуем снова
+        if "no such table: plans" in str(e):
+            await init_db()
+            async with aiosqlite.connect(DB_PATH) as db:
+                cur = await db.execute("SELECT id, name, days, price FROM plans ORDER BY days")
+                rows = await cur.fetchall()
+        else:
+            raise
 
     return {
         "plans": [
@@ -61,4 +72,4 @@ async def api_plans():
             for r in rows
         ]
     }
-
+ 
