@@ -69,6 +69,6 @@ async def telegram_webhook(request: Request):
     await dp.feed_update(bot, update)
     return {"ok": True}
 
-@app.get("/")
-async def health():
-    return {"ok": True}
+app.get("/")(lambda: {"ok": True})
+
+
