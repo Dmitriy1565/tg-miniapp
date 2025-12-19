@@ -7,24 +7,27 @@ const inputEl = document.getElementById("noteInput");
 
 function setStatus(text) { statusEl.textContent = text; }
 
-function getUserId() {
-  // В Mini App можно получить данные пользователя (если доступны)
-  // Для простоты: берём tg.initDataUnsafe.user.id
-  const uid = tg?.initDataUnsafe?.user?.id;
-  if (!uid) throw new Error("Не удалось получить user_id (открой Mini App через кнопку бота).");
-  return uid;
-}
+
 
 async function post(path, payload) {
-  // PUBLIC_WEBAPP_URL должен указывать на домен, где доступен backend
   const base = window.location.origin.replace(/\/webapp$/, "");
   const res = await fetch(`${base}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Tg-Init-Data": tg?.initData || "",
+    },
     body: JSON.stringify(payload),
   });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
+  }
+
   return res.json();
 }
+
 
 function renderNotes(list) {
   notesEl.innerHTML = "";
@@ -48,11 +51,10 @@ function escapeHtml(s) {
 
 document.getElementById("addBtn").onclick = async () => {
   try {
-    const user_id = getUserId();
     const text = (inputEl.value || "").trim();
     if (!text) return setStatus("Напиши текст заметки.");
     setStatus("Добавляю...");
-    await post("/add", { user_id, text });
+    await post("/api/add", { text });
     inputEl.value = "";
     setStatus("✅ Добавлено!");
   } catch (e) {
@@ -62,9 +64,8 @@ document.getElementById("addBtn").onclick = async () => {
 
 document.getElementById("listBtn").onclick = async () => {
   try {
-    const user_id = getUserId();
     setStatus("Загружаю...");
-    const data = await post("/list", { user_id });
+    const data = await post("/api/list", {});
     renderNotes(data.notes || []);
     setStatus("Готово.");
   } catch (e) {
@@ -74,9 +75,8 @@ document.getElementById("listBtn").onclick = async () => {
 
 document.getElementById("clearBtn").onclick = async () => {
   try {
-    const user_id = getUserId();
     setStatus("Очищаю...");
-    await post("/clear", { user_id });
+    await post("/api/clear", {});
     renderNotes([]);
     setStatus("🗑 Очищено!");
   } catch (e) {
