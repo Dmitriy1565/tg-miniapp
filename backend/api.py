@@ -3,8 +3,13 @@ from pydantic import BaseModel
 import os
 
 from backend.db import init_db, add_note, get_notes, clear_notes
-from backend.config import BOT_TOKEN
+
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
+
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+if not BOT_TOKEN:
+    # Если токена нет — это проблема конфигурации Render
+    raise RuntimeError("BOT_TOKEN env is empty (Render env var missing?)")
 
 app = FastAPI()
 
