@@ -2,14 +2,19 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import os
 
-from backend.db import init_db, add_note, get_notes, clear_notes
+from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH
+import aiosqlite
+
 
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-if not BOT_TOKEN:
-    # Если токена нет — это проблема конфигурации Render
+
+IS_LOCAL = os.getenv("RENDER", "") == ""
+
+if not BOT_TOKEN and not IS_LOCAL:
     raise RuntimeError("BOT_TOKEN env is empty (Render env var missing?)")
+
 
 app = FastAPI()
 
@@ -45,3 +50,16 @@ async def api_clear(request: Request):
     user_id = get_user_id_from_request(request)
     await clear_notes(user_id)
     return {"ok": True}
+
+@app.get("/plans")
+async def api_plans():
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT id, name, days, price FROM plans ORDER BY days")
+        rows = await cur.fetchall()
+
+    return {
+        "plans": [
+            {"id": r[0], "name": r[1], "days": r[2], "price": r[3]}
+            for r in rows
+        ]
+    }
