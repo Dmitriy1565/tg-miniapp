@@ -16,9 +16,7 @@ app = FastAPI()
 class AddPayload(BaseModel):
     text: str
 
-@app.on_event("startup")
-async def startup():
-    await init_db()
+
 
 def get_user_id_from_request(request: Request) -> int:
     init_data = request.headers.get("X-Tg-Init-Data", "")

@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Update, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from backend.db import init_db
 
 from backend.api import app as api_app
 from backend.config import BOT_TOKEN
@@ -42,6 +43,8 @@ async def start(msg):
 async def on_startup():
     global bot
 
+    await init_db()
+
     token = os.getenv("BOT_TOKEN", "").strip()
     if not token:
         raise RuntimeError("BOT_TOKEN is empty")
@@ -51,6 +54,7 @@ async def on_startup():
 
     bot = Bot(token)
     await bot.set_webhook(f"{PUBLIC_BASE_URL}/webhook")
+
 
 
 @app.on_event("shutdown")
