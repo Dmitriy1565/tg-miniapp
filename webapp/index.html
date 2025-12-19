@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mini App</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>🧩 Mini App</h1>
+      <p class="subtitle">Заметки в базе данных</p>
+
+      <div class="row">
+        <input id="noteInput" placeholder="Напиши заметку..." />
+      </div>
+
+      <div class="buttons">
+        <button id="addBtn">✅ Добавить</button>
+        <button id="listBtn" class="secondary">📋 Показать</button>
+        <button id="clearBtn" class="danger">🗑 Очистить</button>
+      </div>
+
+      <div id="status" class="status"></div>
+      <div id="notes" class="notes"></div>
+    </div>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
