@@ -23,6 +23,16 @@ async def init_db():
                 price INTEGER NOT NULL
             )
         """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                plan_id INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'created',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
 
         # если тарифов ещё нет — добавляем стартовые
         cur = await db.execute("SELECT COUNT(*) FROM plans")
@@ -55,3 +65,12 @@ async def clear_notes(user_id: int):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("DELETE FROM notes WHERE user_id=?", (user_id,))
         await db.commit()
+
+async def create_order(user_id: int, plan_id: int) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "INSERT INTO orders (user_id, plan_id, status) VALUES (?, ?, 'created')",
+            (user_id, plan_id),
+        )
+        await db.commit()
+        return cur.lastrowid

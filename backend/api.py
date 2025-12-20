@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import os
 import aiosqlite
 import sqlite3
-from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH
+from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH, create_order
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -19,6 +19,8 @@ app = FastAPI()
 class AddPayload(BaseModel):
     text: str
 
+class CreateOrderPayload(BaseModel):
+    plan_id: int
 
 
 def get_user_id_from_request(request: Request) -> int:
@@ -72,4 +74,8 @@ async def api_plans():
             for r in rows
         ]
     }
- 
+@app.post("/order/create")
+async def api_order_create(request: Request, payload: CreateOrderPayload):
+    user_id = get_user_id_from_request(request)
+    order_id = await create_order(user_id, payload.plan_id)
+    return {"ok": True, "order_id": order_id}

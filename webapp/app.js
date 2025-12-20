@@ -113,3 +113,13 @@ function buyPlan(planId) {
   alert("Покупка тарифа ID = " + planId + " (скоро будет оплата)");
 }
 loadPlans();
+
+async function buyPlan(planId) {
+  try {
+    setStatus("Создаю заказ...");
+    const data = await post("/api/order/create", { plan_id: planId });
+    setStatus("✅ Заказ создан: #" + data.order_id);
+  } catch (e) {
+    setStatus("Ошибка покупки: " + e.message);
+  }
+}
