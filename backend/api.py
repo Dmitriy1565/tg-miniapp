@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import os
 import aiosqlite
 import sqlite3
-from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH, create_order, get_last_order, set_order_status
+from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH, create_order, get_last_order, set_order_status, issue_access_for_order
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -115,3 +115,26 @@ async def api_order_mark_paid(request: Request, payload: MarkPaidPayload):
 
     await set_order_status(payload.order_id, "paid")
     return {"ok": True}
+
+@app.post("/order/access")
+async def api_order_access(request: Request):
+    user_id = get_user_id_from_request(request)
+
+    order = await get_last_order(user_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="No orders")
+
+    if order["status"] != "paid":
+        raise HTTPException(status_code=400, detail="Order not paid")
+
+    # если access_code уже есть — просто вернем его
+    # иначе выдадим новый
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("SELECT access_code FROM orders WHERE id=?", (order["id"],))
+        row = await cur.fetchone()
+        access_code = row[0] if row else None
+
+    if not access_code:
+        access_code = await issue_access_for_order(order["id"])
+
+    return {"ok": True, "access_code": access_code}

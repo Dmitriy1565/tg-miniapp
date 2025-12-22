@@ -32,6 +32,13 @@ async def init_db():
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # добавить колонку access_code, если её ещё нет
+        try:
+         await db.execute("ALTER TABLE orders ADD COLUMN access_code TEXT")
+        except Exception:
+            pass
+
 
 
         # если тарифов ещё нет — добавляем стартовые
@@ -108,3 +115,15 @@ async def set_order_status(order_id: int, status: str):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
         await db.commit()
+
+import secrets
+
+async def issue_access_for_order(order_id: int) -> str:
+    access = secrets.token_urlsafe(16)
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "UPDATE orders SET access_code=? WHERE id=?",
+            (access, order_id),
+        )
+        await db.commit()
+    return access

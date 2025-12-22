@@ -138,6 +138,12 @@ if (order.status === "created") {
 } else {
   payBtn.style.display = "none";
 }
+if (order.status === "paid") {
+  accessBtn.style.display = "block";
+} else {
+  accessBtn.style.display = "none";
+}
+
 
 
 
@@ -167,6 +173,20 @@ payBtn.onclick = async () => {
     payBtn.style.display = "none";
   } catch (e) {
     setStatus("Ошибка оплаты: " + e.message);
+  }
+};
+
+const accessBtn = document.getElementById("accessBtn");
+const accessBox = document.getElementById("accessBox");
+
+accessBtn.onclick = async () => {
+  try {
+    setStatus("Получаю доступ...");
+    const data = await post("/api/order/access", {});
+    accessBox.innerHTML = `<div class="note"><b>Твой код доступа:</b><br>${data.access_code}<br><small>Это заглушка. Позже тут будет VPN-конфиг.</small></div>`;
+    setStatus("✅ Доступ выдан!");
+  } catch (e) {
+    setStatus("Ошибка: " + e.message);
   }
 };
 
