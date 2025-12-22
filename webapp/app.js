@@ -123,3 +123,23 @@ async function buyPlan(planId) {
     setStatus("Ошибка покупки: " + e.message);
   }
 }
+
+document.getElementById("myOrderBtn").onclick = async () => {
+  try {
+    setStatus("Загружаю заказ...");
+    const data = await post("/api/order/last", {});
+    const order = data.order;
+
+    if (!order) {
+      setStatus("У тебя пока нет заказов.");
+      return;
+    }
+
+    const p = order.plan;
+    setStatus(
+      `Последний заказ #${order.id}: ${p.name} (${p.days} дней) — ${p.price} ₽, статус: ${order.status}`
+    );
+  } catch (e) {
+    setStatus("Ошибка: " + e.message);
+  }
+};

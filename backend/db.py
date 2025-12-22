@@ -74,3 +74,27 @@ async def create_order(user_id: int, plan_id: int) -> int:
         )
         await db.commit()
         return cur.lastrowid
+
+async def get_last_order(user_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("""
+            SELECT o.id, o.plan_id, o.status, o.created_at,
+                   p.name, p.days, p.price
+            FROM orders o
+            JOIN plans p ON p.id = o.plan_id
+            WHERE o.user_id = ?
+            ORDER BY o.id DESC
+            LIMIT 1
+        """, (user_id,))
+        row = await cur.fetchone()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "plan_id": row[1],
+        "status": row[2],
+        "created_at": row[3],
+        "plan": {"name": row[4], "days": row[5], "price": row[6]},
+    }
