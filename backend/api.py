@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import os
 import aiosqlite
 import sqlite3
-from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH, create_order, get_last_order
+from backend.db import init_db, add_note, get_notes, clear_notes, DB_PATH, create_order, get_last_order, set_order_status
 from backend.tg_auth import verify_webapp_init_data, TelegramAuthError
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -18,6 +18,12 @@ app = FastAPI()
 
 class AddPayload(BaseModel):
     text: str
+
+class MarkPaidPayload(BaseModel):
+    order_id: int
+
+class MarkPaidPayload(BaseModel):
+    order_id: int
 
 class CreateOrderPayload(BaseModel):
     plan_id: int
@@ -85,3 +91,27 @@ async def api_order_last(request: Request):
     user_id = get_user_id_from_request(request)
     order = await get_last_order(user_id)
     return {"ok": True, "order": order}
+
+@app.post("/order/mark_paid")
+async def api_order_mark_paid(request: Request, payload: MarkPaidPayload):
+    user_id = get_user_id_from_request(request)
+
+    # защита: убедимся, что заказ принадлежит этому пользователю
+    order = await get_last_order(user_id)
+    if not order or order["id"] != payload.order_id:
+        raise HTTPException(status_code=403, detail="Order does not belong to user")
+
+    await set_order_status(payload.order_id, "paid")
+    return {"ok": True}
+
+@app.post("/order/mark_paid")
+async def api_order_mark_paid(request: Request, payload: MarkPaidPayload):
+    user_id = get_user_id_from_request(request)
+
+    # проверка, что заказ принадлежит пользователю (берём последний заказ)
+    last = await get_last_order(user_id)
+    if not last or last["id"] != payload.order_id:
+        raise HTTPException(status_code=403, detail="Order does not belong to user")
+
+    await set_order_status(payload.order_id, "paid")
+    return {"ok": True}

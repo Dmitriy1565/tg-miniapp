@@ -129,6 +129,17 @@ document.getElementById("myOrderBtn").onclick = async () => {
     setStatus("Загружаю заказ...");
     const data = await post("/api/order/last", {});
     const order = data.order;
+    lastOrderId = order.id;
+
+lastOrderId = order.id;
+
+if (order.status === "created") {
+  payBtn.style.display = "block";
+} else {
+  payBtn.style.display = "none";
+}
+
+
 
     if (!order) {
       setStatus("У тебя пока нет заказов.");
@@ -143,3 +154,19 @@ document.getElementById("myOrderBtn").onclick = async () => {
     setStatus("Ошибка: " + e.message);
   }
 };
+
+const payBtn = document.getElementById("payBtn");
+let lastOrderId = null;
+
+payBtn.onclick = async () => {
+  try {
+    if (!lastOrderId) return;
+    setStatus("Помечаю как оплачено...");
+    await post("/api/order/mark_paid", { order_id: lastOrderId });
+    setStatus("✅ Оплачено (тест)!");
+    payBtn.style.display = "none";
+  } catch (e) {
+    setStatus("Ошибка оплаты: " + e.message);
+  }
+};
+

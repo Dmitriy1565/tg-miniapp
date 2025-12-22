@@ -98,3 +98,13 @@ async def get_last_order(user_id: int):
         "created_at": row[3],
         "plan": {"name": row[4], "days": row[5], "price": row[6]},
     }
+
+async def set_order_status(order_id: int, status: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
+        await db.commit()
+
+async def set_order_status(order_id: int, status: str):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
+        await db.commit()
